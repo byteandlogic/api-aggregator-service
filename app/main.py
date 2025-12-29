@@ -1,18 +1,25 @@
 from fastapi import FastAPI, HTTPException
+from app.cache import TTLCache
 import requests
 
 app = FastAPI(title="API Aggregator Service")
+country_cache = TTLCache(ttl_seconds=3600)
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-
 @app.get("/country/{code}")
 def country_by_code(code: str):
     code = code.strip().lower()
     url = f"https://restcountries.com/v3.1/alpha/{code}"
+    cache_key = f"country:{code}"
+    cached = country_cache.get(cache_key)
+    if cached is not None:
+        cached_copy = dict(cached)
+        cached_copy["cached"] = True
+        return cached_copy
 
     try:
         resp = requests.get(url, timeout=10)
@@ -30,11 +37,15 @@ def country_by_code(code: str):
 
     c = data[0]
 
-    return {
+    result = {
         "code": code.upper(),
         "name": (c.get("name") or {}).get("common"),
         "capital": (c.get("capital") or [None])[0],
         "region": c.get("region"),
         "population": c.get("population"),
         "source": "REST Countries",
+        "cached": False,
     }
+    country_cache.set(cache_key, result)
+    return result
+
