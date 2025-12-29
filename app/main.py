@@ -1,16 +1,26 @@
 from fastapi import FastAPI, HTTPException
 from app.cache import TTLCache
+from pydantic import BaseModel
+from typing import Optional
 import requests
 
 app = FastAPI(title="API Aggregator Service")
 country_cache = TTLCache(ttl_seconds=3600)
+class CountryResponse(BaseModel):
+    code: str
+    name: Optional[str] = None
+    capital: Optional[str] = None
+    region: Optional[str] = None
+    population: Optional[int] = None
+    source: str
+    cached: bool
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-@app.get("/country/{code}")
+@app.get("/country/{code}", response_model=CountryResponse)
 def country_by_code(code: str):
     code = code.strip().lower()
     url = f"https://restcountries.com/v3.1/alpha/{code}"
