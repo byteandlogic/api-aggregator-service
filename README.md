@@ -10,6 +10,7 @@ A small FastAPI service that aggregates and normalizes responses from public API
 - Normalized JSON response (consistent fields)
 - Unit tests with mocked upstream calls
 - GitHub Actions CI on every push / pull request
+- In-memory TTL caching to reduce upstream API calls
 
 ## Tech Stack
 - Python, FastAPI
@@ -22,3 +23,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+
+## Run with Docker
+```bash
+docker build -t api-aggregator-service .
+docker run -p 8000:8000 api-aggregator-service
